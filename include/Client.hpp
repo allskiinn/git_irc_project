@@ -1,69 +1,81 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gkiala <marvin@42.fr>                      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/11 14:10:32 by gkiala            #+#    #+#             */
+/*   Updated: 2026/04/11 14:10:33 by gkiala           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CLIENT_HPP
-# define CLIENT_HPP
+#define CLIENT_HPP
 
-# include "ft_irc.hpp"
+#include <set>
+#include <string>
 
-struct Away {
-	bool status;
-	std::string message;
-};
+#define MAX_BUFFER_SIZE 4096
+#define MAX_LINE_LENGTH 512
 
 class Client {
-	private:
-		int fd;
-		std::string nickname;
-		std::string username;
-		std::string realname;
-		std::string password;
-		std::string temp_data;
-		std::string hostname;
-		std::string identifier;
+  private:
+    int _fd;
+    std::string _host;
+    std::string _recvBuffer;
+    std::string _sendBuffer;
 
-		Server &server;
-		bool authenticated;
-		std::vector<Channel*> joined_channels;
-		Away away;
+    bool _passAccepted;
+    bool _registered;
+    bool _shouldDisconnect;
+    std::string _nickname;
+    std::string _username;
+    std::string _realname;
+    std::string _awayMessage;
 
-	public:
-		~Client();
-		Client(const Client &copy);
-		Client(int fd,  Server &server);
-		Client &operator=(const Client &copy);
+    std::set<std::string> _joinedChannels;
 
-		void clean_tempData();
-		bool read_into_tempData();
-		bool buffer_has_linebreak();
+  public:
+    Client();
+    Client(int fd, const std::string &host);
 
-		// getters:
-		int get_fd() const;
-		Server &getServer() const;
-		const std::string &get_pass() const;
-		const std::string &get_temp_data() const;
-		const std::string &get_nickname() const;
-		const std::string &get_username() const;
-		const std::string &get_realname() const;
-		const std::string &get_hostname() const;
-		const std::string &get_identifier() const;
-		const std::vector<Channel*> &get_joined_channels() const;
-		const std::string &get_message() const;
+    int getFd() const;
+    const std::string &getHost() const;
+    const std::string &getNickname() const;
+    const std::string &getUsername() const;
+    const std::string &getRealname() const;
+    const std::string &getRecvBuffer() const;
+    const std::string &getSendBuffer() const;
+    const std::string &getAwayMessage() const;
+    const std::set<std::string> &getJoinedChannels() const;
 
-		// setters:
-		void add_channel(Channel* channel);
-		void remove_channel(Channel* channel);
-		void set_hostname(int client_socket);
-		void set_authentication(bool status);
-		void set_password(const std::string &password);
-		void set_nickname(const std::string &nickname);
-		void set_username(const std::string &username);
-		void set_realname(const std::string &realname);
-		void set_identifier(const std::string &identifier);
-		void set_status(bool status);
-		void set_message(const std::string &message);
+    bool isPassAccepted() const;
+    bool isRegistered() const;
+    bool isAway() const;
+    bool hasNick() const;
+    bool hasUser() const;
 
-		// checkers:
-		bool is_authenticated() const;
-		bool password_matched(Server &server) const;
-		bool is_away() const;
+    void setPassAccepted(bool status);
+    void setRegistered(bool status);
+    void setNickname(const std::string &nickname);
+    void setUsername(const std::string &username);
+    void setRealname(const std::string &realname);
+    void setAwayMessage(const std::string &message);
+
+    void appendRecvData(const std::string &chunk);
+    bool popNextLine(std::string &line);
+
+    void queueSendData(const std::string &data);
+    bool hasPendingSend() const;
+    void consumeSentBytes(size_t count);
+
+    void joinChannel(const std::string &channelName);
+    void leaveChannel(const std::string &channelName);
+    bool isInChannel(const std::string &channelName) const;
+
+    bool shouldDisconnect() const;
+    void markForDisconnection();
 };
 
 #endif

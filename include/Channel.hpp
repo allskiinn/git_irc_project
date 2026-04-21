@@ -1,69 +1,65 @@
-#ifndef CHANNEL_HPP
-# define CHANNEL_HPP
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gkiala <marvin@42.fr>                      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/11 14:10:46 by gkiala            #+#    #+#             */
+/*   Updated: 2026/04/11 14:10:47 by gkiala           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-# include "ft_irc.hpp"
+#ifndef CHANNEL_HPP
+#define CHANNEL_HPP
+
+#include <set>
+#include <string>
 
 class Channel {
-	private:
-		std::string         	name_channel;       // nome do canal (começar com # ou &)
-		std::string         	topic_channel;      // Topic do canal
-		std::string         	pass_channel;       // Senha do canal (se o modo +k estiver ativo)
-		std::deque<int> 		join_order; 		// Ordem de entrada dos membros
-		std::map<int, Client*>	members_channel;    // Membros do canal (fd -> Client*)
-		std::map<int, Client*>	invited_channel;    // Membros convidados para o canal
-		std::map<int, Client*>	operators_channel;  // Operadores do canal (fd -> Client*)
-		
-		// Modos do canal
-		bool byInviteOnly;      // mode +i
-		bool topicRestricted; // mode +t
-		bool passOn;          // mode +k
-		size_t userLimit;     // mode +l
+  private:
+    std::string _name;
+    std::string _topic;
+    std::string _key;
+    bool _inviteOnly;
+    bool _topicRestricted;
+    int _userLimit;
+    std::set<int> _members;
+    std::set<int> _operators;
+    std::set<int> _invited;
 
-	public:
-		~Channel();
-		Channel(const Channel &copy);
-		Channel& operator=(const Channel &copy);
-		Channel(const std::string& name_channel, Client* new_channel);
+  public:
+    Channel();
+    Channel(const std::string &name);
 
-		// Operações basicas do canal
-		void addMember(Client* client);
-		void removeMember(Client* client);
-		void broadcast(Client* sender = NULL, const std::string& message = "");
-		
-		// Operações do operador de canal
-		void addOperator(Client* client);
-		void removeOperator(Client* client);
-		void promoteFirstMember();
-		bool isOperator(Client* client) const;
-		bool isInvited(Client* client) const;
-		int getCurrentMembersCount();
-		int getCurrentOperatorsCount();
-		int getUserLimit();
-		std::string getModes() const;
-		std::string getModeParams() const;
-		
-		void setInviteOnly(bool value);
-		void setTopicRestricted(bool value);
-		void setPassOn(const std::string& pass);
-		void setUserLimit(size_t limit);
-		
-		bool mode(char mode) const;
-		bool checkUserModes(char mode, Client* client);
-		bool isMember(Client* client) const;
-		
-		// Getters
-		const std::string& getName() const;
-		const std::string& getTopic() const;
-		const std::string& getPass() const;
-		const std::map<int, Client*>& getMembers() const;
-			
-		// Exigido pelo subject
-		void inviteMember(Client* target);
-		void consumeInvite(Client* target);
-		void setTopic(const std::string& new_topic);
+    const std::string &getName() const;
+    const std::string &getTopic() const;
+    const std::string &getKey() const;
+    bool isInviteOnly() const;
+    bool isTopicRestricted() const;
+    int getUserLimit() const;
+    const std::set<int> &getMembers() const;
+    const std::set<int> &getOperators() const;
 
-		// Validações
-		bool validChannelName(const std::string& name) const;
+    bool isMember(int fd) const;
+    bool isOperator(int fd) const;
+    bool isInvited(int fd) const;
+    bool isFull() const;
+
+    void setTopic(const std::string &topic);
+    void setKey(const std::string &key);
+    void setInviteOnly(bool state);
+    void setTopicRestricted(bool state);
+    void setUserLimit(int limit);
+
+    void addMember(int fd);
+    void removeMember(int fd);
+    void addOperator(int fd);
+    void removeOperator(int fd);
+    void invite(int fd);
+    void uninvite(int fd);
+    bool empty() const;
 };
 
 #endif
+
